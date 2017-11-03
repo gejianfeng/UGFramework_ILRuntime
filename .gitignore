@@ -3,3 +3,7 @@ Client/ProjectX/Library/metadata/
 Client/ProjectX/Library/ShaderCache/
 Client/ProjectX/Library/ScriptAssemblies/
 Client/ProjectX/Temp/
+Client/ProjectX/ProjectX.csproj
+Client/ProjectX/ProjectX.Editor.csproj
+Client/ProjectX/ProjectX.sln
+Client/ProjectX/.vs/
