@@ -1,0 +1,7 @@
+
+{
+  "ingame.db" : {
+    "BuildingInfo" : "BuildingColor.xls",
+    "Currency" : "Currency.xls"
+  }
+}
