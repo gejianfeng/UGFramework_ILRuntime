@@ -1,3 +1,6 @@
 [submodule "Client/Patch"]
 	path = Client/Patch
 	url = https://github.com/gejianfeng/UGFramework_ILRuntime_Patch.git
+[submodule "Client/ProjectX/Assets/Patch"]
+	path = Client/ProjectX/Assets/Patch
+	url = https://github.com/gejianfeng/UGFramework_ILRuntime_Patch.git
