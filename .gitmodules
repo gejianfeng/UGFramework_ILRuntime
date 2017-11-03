@@ -1,0 +1,3 @@
+[submodule "Client/PatchSource"]
+	path = Client/PatchSource
+	url = https://github.com/gejianfeng/UGFramework_ILRuntime_Patch.git
