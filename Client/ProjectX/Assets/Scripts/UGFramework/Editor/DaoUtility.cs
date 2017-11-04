@@ -20,7 +20,7 @@
         public static readonly string DbExportPath = Application.dataPath + "/StreamingAssets/db";
         public static readonly string ExcelFilePath = Application.dataPath + "/../../../Design";
         public static readonly string CodeGeneratePath = Application.dataPath + "/Patch/Patch/Src/Dao";
-        public static readonly string DbPassword = "@(7$$5)1";
+        public static readonly string DbPassword = "";//"@(7$$5)1";
         //---------- Above defination should be customed according to project. ----------
 
         public class ExcelTable
@@ -143,11 +143,6 @@
 
                 m_CreateTableSqlCmd = GenerateCreateTableSqlString();
 
-
-
-
-
-
                 m_IsValid = true;
             }
 
@@ -172,7 +167,58 @@
 
                 _Ret += ")"; // CREATE TABLE '[Table Name]' ()
 
-                return string.Empty;
+                return _Ret;
+            }
+
+            public void GenerateInsertDataSqlString(int RowIndex, out string Command, out List<object> ParamList)
+            {
+                Command = string.Empty;
+                ParamList = null;
+                
+                if (m_Data.Columns.Count <= 0 || RowIndex < 0 || RowIndex > m_Data.Rows.Count)
+                {
+                    return;
+                }
+
+                ParamList = new List<object>();
+
+                Command += "INSERT INTO '";
+                Command += m_TableName;
+                Command += "' (";
+
+                string _FieldNames = string.Empty;
+                string _FieldValuePlaceholder = string.Empty;
+
+                for (int i = 0; i < m_FieldNames.Count; ++i)
+                {
+                    _FieldNames += (i == 0) ? (m_FieldNames[i]) : (", " + m_FieldNames[i]);
+                    _FieldValuePlaceholder += (i == 0) ? "?" : ", ?";
+
+                    if (i < m_FieldTypes.Count)
+                    {
+                        if (m_FieldTypes[i] == "INTEGER")
+                        {
+                            ParamList.Add(Convert.ToInt64(m_Data.Rows[RowIndex][i].ToString()));
+                        }
+                        else if (m_FieldTypes[i] == "TEXT")
+                        {
+                            ParamList.Add(m_Data.Rows[RowIndex][i].ToString());
+                        }
+                        else if (m_FieldTypes[i] == "REAL")
+                        {
+                            ParamList.Add(Convert.ToSingle(m_Data.Rows[RowIndex][i].ToString()));
+                        }
+                        else
+                        {
+                            ParamList.Add(null);
+                        }
+                    }
+                }
+
+                Command += _FieldNames;
+                Command += ") VALUES (";
+                Command += _FieldValuePlaceholder;
+                Command += ")";
             }
         }
 
@@ -314,6 +360,9 @@
 
                     IExcelDataReader _Reader = ExcelReaderFactory.CreateReader(_FileStream);
 
+                    _FileStream.Close();
+                    _FileStream.Dispose();
+
                     if (_Reader == null)
                     {
                         Debug.LogError("[Export Data] Cannot read " + _ExcelFileName + ".");
@@ -347,7 +396,60 @@
 
                     ExcelTable _ExcelTableObject = new ExcelTable(_ExcelTableName, _TableData);
 
+                    if (!_ExcelTableObject.IsValid)
+                    {
+                        Debug.LogError("[Export Data] Cannot read " + _ExcelFileName + "|" + _ExcelTableName + ".");
+                        continue;
+                    }
 
+                    string _CreateTableCommand = _ExcelTableObject.CreateTableSqlCommand;
+
+                    try
+                    {
+                        _DbConnection.Execute(_CreateTableCommand);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.Log(ex.Message);
+                        continue;
+                    }
+
+                    SQLiteCommand _InsertCommand = null;
+                    string _InsertSqlCommand = string.Empty;
+                    List<object> _ParamList = null;
+
+                    if (_Rows >= 2)
+                    {
+                        _DbConnection.BeginTransaction();
+
+                        for (int i = 2; i < _Rows; ++i)
+                        {
+                            try
+                            {
+                                _ExcelTableObject.GenerateInsertDataSqlString(i, out _InsertSqlCommand, out _ParamList);
+
+                                if (!string.IsNullOrEmpty(_InsertSqlCommand) && _ParamList != null)
+                                {
+                                    _InsertCommand = _DbConnection.CreateCommand(_InsertSqlCommand, _ParamList.ToArray());
+                                }
+
+                                if (_InsertCommand != null)
+                                {
+                                    _InsertCommand.ExecuteNonQuery();
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.LogError(ex.Message);
+                            }
+                        }
+
+                        _DbConnection.Commit();
+
+                        _InsertCommand = null;
+                        _InsertSqlCommand = string.Empty;
+                        _ParamList = null;
+                    }
                 }
 
                 _DbConnection.Close();
