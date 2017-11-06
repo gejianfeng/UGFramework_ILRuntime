@@ -360,9 +360,6 @@
 
                     IExcelDataReader _Reader = ExcelReaderFactory.CreateReader(_FileStream);
 
-                    _FileStream.Close();
-                    _FileStream.Dispose();
-
                     if (_Reader == null)
                     {
                         Debug.LogError("[Export Data] Cannot read " + _ExcelFileName + ".");
