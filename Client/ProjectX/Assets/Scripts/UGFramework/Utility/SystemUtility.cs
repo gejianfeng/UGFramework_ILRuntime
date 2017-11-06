@@ -87,5 +87,22 @@
 
             _DirInfo.Delete();
         }
+
+        public static bool IsFileExist(string FilePath)
+        {
+            if (string.IsNullOrEmpty(FilePath))
+            {
+                return false;
+            }
+
+            FileInfo _FileInfo = new FileInfo(FilePath);
+
+            if (_FileInfo == null || !_FileInfo.Exists)
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }
