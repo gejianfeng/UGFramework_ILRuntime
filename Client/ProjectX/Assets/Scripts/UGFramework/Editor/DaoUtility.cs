@@ -19,7 +19,7 @@
         public static readonly string ConfigFilePath = Application.dataPath + "/export_db_config.json";
         public static readonly string DbExportPath = Application.dataPath + "/StreamingAssets/db";
         public static readonly string ExcelFilePath = Application.dataPath + "/../../../Design";
-        public static readonly string CodeGeneratePath = Application.dataPath + "/Patch/Patch/Src/Dao";
+        public static readonly string CodeGeneratePath = Application.dataPath + "/Patch/Patch/Src/Daos";
         public static readonly string DbPassword = "";//"@(7$$5)1";
         //---------- Above defination should be customed according to project. ----------
 
@@ -220,6 +220,199 @@
                 Command += _FieldValuePlaceholder;
                 Command += ")";
             }
+
+            public void GenerateDaoAccessCode(string Path, string DbName)
+            {
+                if (string.IsNullOrEmpty(Path))
+                {
+                    return;
+                }
+
+                string _DaoSrc = string.Empty;
+                _DaoSrc += "namespace PureMVC.Project.Daos\n";
+                _DaoSrc += "{\n";
+                _DaoSrc += "\tusing SQLite.Attribute;\n";
+                _DaoSrc += "\tusing PureMVC.UGFramework.Core;\n";
+                _DaoSrc += "\tusing UnityEngine.Scripting;\n\n";
+                _DaoSrc += "\t[Preserve]\n";
+                _DaoSrc += "\tpublic class " + m_TableName + ": DaoVO\n";
+                _DaoSrc += "\t{\n";
+                _DaoSrc += "\t\t[PrimaryKey]\n";
+                _DaoSrc += "\t\tpublic " + GetFieldCodeTypeByIndex(m_PrimaryKeyIndex) + " " + m_FieldNames[m_PrimaryKeyIndex] + "{ get; set; }\n";
+                for (int i = 0; i < m_FieldNames.Count; ++i)
+                {
+                    if (i == m_PrimaryKeyIndex)
+                    {
+                        continue;
+                    }
+
+                    _DaoSrc += "\t\tpublic " + GetFieldCodeTypeByIndex(i) + " " + m_FieldNames[i] + "{ get; set; }\n";
+                }
+                _DaoSrc += "\t\tpublic " + GetFieldCodeTypeByIndex(m_PrimaryKeyIndex) + " GetIndexValue()\n";
+                _DaoSrc += "\t\t{\n";
+                _DaoSrc += "\t\t\treturn " + m_FieldNames[m_PrimaryKeyIndex] + ";";
+                _DaoSrc += "\t\t}\n";
+                _DaoSrc += "\t}\n";
+                _DaoSrc += "}\n";
+
+                FileStream _DaoStream = null;
+                StreamWriter _DaoWriter = null;
+
+                try
+                {
+                    _DaoStream = new FileStream(Path + "/" + m_TableName + ".cs", FileMode.Create);
+
+                    if (_DaoStream != null)
+                    {
+                        _DaoWriter = new StreamWriter(_DaoStream);
+
+                        if (_DaoWriter != null)
+                        {
+                            _DaoWriter.Write(_DaoSrc);
+                        }
+                    }
+                }
+                catch(Exception ex)
+                {
+                    Debug.LogError(ex.Message);
+                }
+                finally
+                {
+                    if (_DaoWriter != null)
+                    {
+                        _DaoWriter.Close();
+                        _DaoWriter.Dispose();
+                        _DaoWriter = null;
+                    }
+
+                    if (_DaoStream != null)
+                    {
+                        _DaoStream.Close();
+                        _DaoStream.Dispose();
+                        _DaoStream = null;
+                    }
+                }
+
+                string _DaoAccessSrc = string.Empty;
+                string _CacheValueName = "m_DataCache";
+                string _DaoIndexName = m_TableName + "Id";
+                _DaoAccessSrc += "namespace PureMVC.Project.Daos\n";
+                _DaoAccessSrc += "{\n";
+                _DaoAccessSrc += "\tusing System.Collections.Generic;\n";
+                _DaoAccessSrc += "\tusing PureMVC.UGFramework.Core;\n\n";
+                _DaoAccessSrc += "\tpublic class " + m_TableName + "Dao: Dao\n";
+                _DaoAccessSrc += "\t{\n";
+                _DaoAccessSrc += "\t\tprotected Dictionary<" + GetFieldCodeTypeByIndex(m_PrimaryKeyIndex) + ", " + m_TableName + "> " + _CacheValueName + " = null;\n\n";
+                _DaoAccessSrc += "\t\tpublic " + m_TableName + "Dao(string DbPath): base(DbPath)\n";
+                _DaoAccessSrc += "\t\t{\n";
+                _DaoAccessSrc += "\t\t\t" + _CacheValueName + " = new Dictionary<" + GetFieldCodeTypeByIndex(m_PrimaryKeyIndex) + ", " + m_TableName + ">();\n";
+                _DaoAccessSrc += "\t\t}\n";
+                _DaoAccessSrc += "\t\t~" + m_TableName + "Dao()\n";
+                _DaoAccessSrc += "\t\t{\n";
+                _DaoAccessSrc += "\t\t\tif (" + _CacheValueName + " != null)\n";
+                _DaoAccessSrc += "\t\t\t{\n";
+                _DaoAccessSrc += "\t\t\t\t" + _CacheValueName + ".Clear();\n";
+                _DaoAccessSrc += "\t\t\t\t" + _CacheValueName + " = null;\n";
+                _DaoAccessSrc += "\t\t\t}\n";
+                _DaoAccessSrc += "\t\t}\n";
+                _DaoAccessSrc += "\t\tpublic " + m_TableName + " Get" + m_TableName + "ByIndex(" + GetFieldCodeTypeByIndex(m_PrimaryKeyIndex) + " " + _DaoIndexName + ")\n";
+                _DaoAccessSrc += "\t\t{\n";
+                _DaoAccessSrc += "\t\t\tif (" + _CacheValueName + ".ContainsKey(" + _DaoIndexName + "))\n";
+                _DaoAccessSrc += "\t\t\t{\n";
+                _DaoAccessSrc += "\t\t\t\treturn " + _CacheValueName + "[" + _DaoIndexName + "];\n";
+                _DaoAccessSrc += "\t\t\t}\n";
+                _DaoAccessSrc += "\t\t\telse\n";
+                _DaoAccessSrc += "\t\t\t{\n";
+                _DaoAccessSrc += "\t\t\t\treturn CacheData(" + _DaoIndexName + ");\n";
+                _DaoAccessSrc += "\t\t\t}\n";
+                _DaoAccessSrc += "\t\t}\n";
+                _DaoAccessSrc += "\t\tprotected " + m_TableName + " CacheData(" + GetFieldCodeTypeByIndex(m_PrimaryKeyIndex) + " " + _DaoIndexName + ")\n";
+                _DaoAccessSrc += "\t\t{\n";
+                _DaoAccessSrc += "\t\t\tif (" + _CacheValueName + ".ContainsKey(" + _DaoIndexName + "))\n";
+                _DaoAccessSrc += "\t\t\t{\n";
+                _DaoAccessSrc += "\t\t\t\treturn " + _CacheValueName + "[" + _DaoIndexName + "];\n";
+                _DaoAccessSrc += "\t\t\t}\n";
+                _DaoAccessSrc += "\t\t\t" + m_TableName + " _Ret = null;\n";
+                _DaoAccessSrc += "\t\t\tSqlCipher4Unity3D.SQLiteConnection _connection = new SqlCipher4Unity3D.SQLiteConnection(m_DbPath, \"" + DaoUtility.DbPassword +"\");\n";
+                _DaoAccessSrc += "\t\t\tif (_connection == null)\n";
+                _DaoAccessSrc += "\t\t\t{\n";
+                _DaoAccessSrc += "\t\t\t\treturn null;\n";
+                _DaoAccessSrc += "\t\t\t}\n";
+                _DaoAccessSrc += "\t\t\tIEnumerable<" + m_TableName + "> _RetSet = _connection.Table<" + m_TableName + ">().Where(x => x." + m_FieldNames[m_PrimaryKeyIndex] + " == " + _DaoIndexName + ");\n";
+                _DaoAccessSrc += "\t\t\tforeach(var _Iterator in _RetSet)\n";
+                _DaoAccessSrc += "\t\t\t{\n";
+                _DaoAccessSrc += "\t\t\t\t_Ret = _Iterator;\n";
+                _DaoAccessSrc += "\t\t\t\t" + _CacheValueName + ".Add(" + _DaoIndexName + ", _Ret);\n";
+                _DaoAccessSrc += "\t\t\t\tbreak;\n";
+                _DaoAccessSrc += "\t\t\t}\n";
+                _DaoAccessSrc += "\t\t\t_connection.Close();\n";
+                _DaoAccessSrc += "\t\t\t_connection.Dispose();\n";
+                _DaoAccessSrc += "\t\t\t_connection = null;\n";
+                _DaoAccessSrc += "\t\t\treturn _Ret;\n";
+                _DaoAccessSrc += "\t\t}\n";
+                _DaoAccessSrc += "\t}\n";
+                _DaoAccessSrc += "}\n";
+
+                try
+                {
+                    _DaoStream = new FileStream(Path + "/" + m_TableName + "Dao.cs", FileMode.Create);
+
+                    if (_DaoStream != null)
+                    {
+                        _DaoWriter = new StreamWriter(_DaoStream);
+
+                        if (_DaoWriter != null)
+                        {
+                            _DaoWriter.Write(_DaoAccessSrc);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError(ex.Message);
+                }
+                finally
+                {
+                    if (_DaoWriter != null)
+                    {
+                        _DaoWriter.Close();
+                        _DaoWriter.Dispose();
+                        _DaoWriter = null;
+                    }
+
+                    if (_DaoStream != null)
+                    {
+                        _DaoStream.Close();
+                        _DaoStream.Dispose();
+                        _DaoStream = null;
+                    }
+                }
+            }
+
+            protected string GetFieldCodeTypeByIndex(int Index)
+            {
+                if (Index < 0 || Index > m_FieldTypes.Count)
+                {
+                    return string.Empty;
+                }
+
+                string _Ret = string.Empty;
+
+                switch (m_FieldTypes[Index])
+                {
+                    case "INTEGER":
+                        _Ret = "int";
+                        break;
+                    case "REAL":
+                        _Ret = "float";
+                        break;
+                    case "TEXT":
+                        _Ret = "string";
+                        break;
+                }
+
+                return _Ret;
+            }
         }
 
         [MenuItem("UGFramework/Config Data/Create Export Config")]
@@ -244,6 +437,8 @@
             JsonMapper.ToJson(_Content, _Writer);
                         
             File.WriteAllText(ConfigFilePath, _Builder.ToString());
+
+            AssetDatabase.Refresh();
         }
 
         [MenuItem("UGFramework/Config Data/Export Config Data")]
@@ -268,12 +463,7 @@
 
             Debug.Log("======> Remove Previous Generated Code");
 
-            if (Directory.Exists(CodeGeneratePath))
-            {
-                SystemUtility.DeleteDirectory(CodeGeneratePath);
-            }
-
-            Directory.CreateDirectory(CodeGeneratePath);
+            ConfigData_RemoveAutoGenCode();
 
             Debug.Log("======> Load Export Config <======");
 
@@ -297,6 +487,21 @@
             ExportData(_ConfigSetting);
 
             Debug.Log("======> Finish Excel Data Export <======");
+
+            AssetDatabase.Refresh();
+        }
+
+        [MenuItem("UGFramework/Config Data/Remove Auto Generated Code")]
+        public static void ConfigData_RemoveAutoGenCode()
+        {
+            if (Directory.Exists(CodeGeneratePath))
+            {
+                SystemUtility.DeleteDirectory(CodeGeneratePath);
+            }
+
+            Directory.CreateDirectory(CodeGeneratePath);
+
+            AssetDatabase.Refresh();
         }
 
         protected static void ExportData(Dictionary<string, Dictionary<string, string>> ConfigSetting)
@@ -443,6 +648,8 @@
 
                         _DbConnection.Commit();
 
+                        _ExcelTableObject.GenerateDaoAccessCode(CodeGeneratePath, _ExportDbName);
+
                         _InsertCommand = null;
                         _InsertSqlCommand = string.Empty;
                         _ParamList = null;
@@ -558,3 +765,4 @@
 
     }
 }
+ 

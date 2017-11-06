@@ -84,6 +84,8 @@
                     DeleteDirectory(_SubDirInfo.FullName);
                 }
             }
+
+            _DirInfo.Delete();
         }
     }
 }
