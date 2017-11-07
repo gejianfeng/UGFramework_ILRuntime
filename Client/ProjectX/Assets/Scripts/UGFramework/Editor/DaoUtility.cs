@@ -19,7 +19,7 @@
         public static readonly string ConfigFilePath = Application.dataPath + "/export_db_config.json";
         public static readonly string DbExportPath = Application.dataPath + "/StreamingAssets/db";
         public static readonly string ExcelFilePath = Application.dataPath + "/../../../Design";
-        public static readonly string CodeGeneratePath = Application.dataPath + "/Patch/Patch/Src/Daos";
+        public static readonly string CodeGeneratePath = Application.dataPath + "/Patch/Daos";
         public static readonly string DbPassword = "";//"@(7$$5)1";
         //---------- Above defination should be customed according to project. ----------
 
