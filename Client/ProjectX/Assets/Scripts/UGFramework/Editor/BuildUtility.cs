@@ -183,6 +183,13 @@
                 return false;
             }
 
+            DirectoryInfo _DestDirInfo = new DirectoryInfo(DestFullPath);
+
+            if (_DestDirInfo == null || !_DestDirInfo.Exists)
+            {
+                Directory.CreateDirectory(DestFullPath);
+            }
+
             foreach (var _FileInfo in _DirInfo.GetFiles())
             {
                 if (_FileInfo.Extension == ".cs")
