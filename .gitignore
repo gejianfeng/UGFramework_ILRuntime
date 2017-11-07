@@ -14,3 +14,9 @@ Client/ProjectX/Library/UnityAssemblies/
 Client/Patch/Patch/PatchConfig.json
 Client/PatchSrc/
 Client/Patch/Patch/bin/
+*.log
+Client/ProjectX/obj
+LastBuild.buildreport
+Assembly-CSharp-Editor.csproj
+Assembly-CSharp.csproj
+ProjectX.userprefs

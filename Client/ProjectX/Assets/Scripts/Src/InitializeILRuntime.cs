@@ -91,52 +91,23 @@
                 string _FileName = MainUI.GameDataFileList[i];
                 string _FilePath = Path.Combine(m_GameDataPath, _FileName);
 
-                if (Application.platform == RuntimePlatform.Android)
-                {
-                    WWW _Reader = new WWW(_FilePath);
+				FileInfo _FileInfo = new FileInfo(_FilePath);
 
-                    while (!_Reader.isDone)
-                    {
-                        yield return null;
-                    }
+				if (_FileInfo == null || !_FileInfo.Exists)
+				{
+					yield break;
+				}
 
-                    if (!string.IsNullOrEmpty(_Reader.error))
-                    {
-                        Debug.LogError(_Reader.error);
-                        yield break;
-                    }
+				byte[] _bytes = File.ReadAllBytes(_FilePath);
 
-                    byte[] _bytes = _Reader.bytes;
-
-                    if (i == 0)
-                    {
-                        m_Dll = new MemoryStream(_bytes);
-                    }
-                    else
-                    {
-                        m_Pdb = new MemoryStream(_bytes);
-                    }
-                }
-                else
-                {
-                    FileInfo _FileInfo = new FileInfo(_FilePath);
-
-                    if (_FileInfo == null || !_FileInfo.Exists)
-                    {
-                        yield break;
-                    }
-
-                    byte[] _bytes = File.ReadAllBytes(_FilePath);
-
-                    if (i == 0)
-                    {
-                        m_Dll = new MemoryStream(_bytes);
-                    }
-                    else
-                    {
-                        m_Pdb = new MemoryStream(_bytes);
-                    }
-                }
+				if (i == 0)
+				{
+					m_Dll = new MemoryStream(_bytes);
+				}
+				else
+				{
+					m_Pdb = new MemoryStream(_bytes);
+				}
 
                 yield return null;
             }
