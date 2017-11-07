@@ -47,7 +47,7 @@
 
             FileInfo _FileInfo = new FileInfo(SrcPath);
 
-            if (_FileInfo == null || !_FileInfo.Exists || _FileInfo.Attributes != FileAttributes.Normal)
+            if (_FileInfo == null || !_FileInfo.Exists)
             {
                 return;
             }

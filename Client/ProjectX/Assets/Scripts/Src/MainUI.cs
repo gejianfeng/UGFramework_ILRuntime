@@ -4,6 +4,7 @@
     using UnityEngine.UI;
     using PureMVC.UGFramework.Core;
     using System;
+    using System.IO;
 
     public class MainUI: MonoBehaviour
     {
@@ -11,6 +12,13 @@
         private bool m_bDebug = false;
 
         private Text m_HintText = null;
+
+        public static string DbSrcPath {  get { return Path.Combine(Application.streamingAssetsPath, "db"); } }
+        public static string DbDestPath {  get { return Path.Combine(Application.persistentDataPath, "db"); } }
+        public static string GameDataSrcPath { get { return Path.Combine(Application.streamingAssetsPath, "data"); } }
+        public static string GameDataDestPath { get { return Path.Combine(Application.persistentDataPath, "data"); } }
+
+        public static readonly string[] GameDataFileList = new string[] { "game1.data", "game2.data" };
 
         public bool IsDebug
         {
@@ -54,7 +62,7 @@
 
         private bool CheckInDebugEnv()
         {
-            return Type.GetType("PureMVC.Project.Define.GameConst") == null;
+            return Type.GetType("PureMVC.Project.PatchLoader") == null;
         }
 
         private void RunInEditorMode()
@@ -66,10 +74,13 @@
 
             State[] _StateList = new State[]
             {
-                new CopyLocalDb(string.Empty)
+                new CopyLocalDb(StartGame.NAME),
+                new StartGame()
             };
 
             m_StateMachine.AddState(_StateList);
+
+            m_StateMachine.SwitchState(CopyLocalDb.NAME);
         }
 
         private void RunInDeviceMode()
@@ -81,12 +92,15 @@
 
             State[] _StateList = new State[]
             {
-                new CopyLocalDb(string.Empty),
+                new CopyLocalDb(CopyLocalGameData.NAME),
                 new CopyLocalGameData(),
-                new InitializeILRuntime()
+                new InitializeILRuntime(),
+                new StartGame()
             };
 
             m_StateMachine.AddState(_StateList);
+
+            m_StateMachine.SwitchState(CopyLocalDb.NAME);
         }
 
         public void SetHint(string Content)

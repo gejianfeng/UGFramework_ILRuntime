@@ -11,8 +11,8 @@
     {
         public new const string NAME = "CopyLocalDb";
 
-        private string m_SrcPath = Application.streamingAssetsPath + "/db";
-        private string m_DestPath = Application.persistentDataPath + "/db";
+        private string m_SrcPath = string.Empty;
+        private string m_DestPath = string.Empty;
 
         private string m_NextStateName = string.Empty;
 
@@ -46,14 +46,26 @@
 
             _MainUI.SetHint("Initialize Game Resource");
 
-#if UNITY_EDITOR
-            if (SystemUtility.IsFileExist(m_DestPath + "/ingame.db"))
+            m_SrcPath = MainUI.DbSrcPath;
+            m_DestPath = MainUI.DbDestPath;
+
+            DirectoryInfo _DirInfo = new DirectoryInfo(m_DestPath);
+
+            if (_DirInfo == null || !_DirInfo.Exists)
             {
-                SystemUtility.DeleteFile(m_DestPath + "/ingame.db");
+                Directory.CreateDirectory(m_DestPath);
+            }
+
+            string _DestDbPath = Path.Combine(m_DestPath, "ingame.db");
+
+#if UNITY_EDITOR
+            if (SystemUtility.IsFileExist(_DestDbPath))
+            {
+                SystemUtility.DeleteFile(_DestDbPath);
             }
 #endif
 
-            if (!SystemUtility.IsFileExist(m_DestPath + "/ingame.db"))
+            if (!SystemUtility.IsFileExist(_DestDbPath))
             {
                 m_ToCopyFileList.Add("ingame.db");
             }
@@ -99,31 +111,48 @@
 
             for (int i = 0; i < m_ToCopyFileList.Count; ++i)
             {
-                string _SrcPath = m_SrcPath + "/" + m_ToCopyFileList[i];
-                string _DestPath = m_DestPath + "/" + m_ToCopyFileList[i];
+                string _SrcPath = Path.Combine(m_SrcPath, m_ToCopyFileList[i]);
+                string _DestPath = Path.Combine(m_DestPath, m_ToCopyFileList[i]);
 
-                WWW _Reader = new WWW(_SrcPath);
-
-                while (!_Reader.isDone)
+                if (Application.platform == RuntimePlatform.Android)
                 {
-                    yield return null;
+                    WWW _Reader = new WWW(_SrcPath);
+
+                    while (!_Reader.isDone)
+                    {
+                        yield return null;
+                    }
+
+                    if (!string.IsNullOrEmpty(_Reader.error))
+                    {
+                        Debug.LogError(_Reader.error);
+                        yield break;
+                    }
+
+                    try
+                    {
+                        File.WriteAllBytes(_DestPath, _Reader.bytes);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError(ex.Message);
+                        yield break;
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        File.Copy(_SrcPath, _DestPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError(ex.Message);
+                        yield break;
+                    }
                 }
 
-                if (!string.IsNullOrEmpty(_Reader.error))
-                {
-                    Debug.LogError(_Reader.error);
-                    yield break;
-                }
-
-                try
-                {
-                    File.WriteAllBytes(_DestPath, _Reader.bytes);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError(ex.Message);
-                    yield break;
-                }
+                yield return null;
             }
 
             m_bFinished = true;

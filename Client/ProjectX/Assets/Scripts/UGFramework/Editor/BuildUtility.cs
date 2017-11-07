@@ -19,8 +19,8 @@
         public static readonly string DestPathCodePath = Application.dataPath + "/../../PatchSrc";
         public static readonly string DestPathCodeRelativePath = "..\\..\\PatchSrc";
 
-        [MenuItem("UGFramework/Build/Create Build Project Config")]
-        public static void Build_CreateBuildProjectConfig()
+        [MenuItem("UGFramework/Build/Gen .csproj Config")]
+        public static void CreatePatchProjectConfig()
         {
             File.Delete(ConfigFilePath);
 
@@ -42,8 +42,8 @@
         }
 
 
-        [MenuItem("UGFramework/Build/Prepare For Build")]
-        public static void Build_PrepareForBuild()
+        [MenuItem("UGFramework/Build/Prepare Build")]
+        public static void PrepareBuild()
         {
             // Check and remove old csproj file
             FileInfo _CsprojFile = new FileInfo(CsprojPath);
@@ -114,8 +114,45 @@
                 return;
             }
 
-            // Delete Src Path Files
-            SystemUtility.DeleteDirectory(SrcPatchCodePath);
+            // Rename .cs src file
+            RenameSrcFiles(SrcPatchCodePath, ".cs", ".cs_");
+            AssetDatabase.Refresh();
+        }
+
+        [MenuItem("UGFramework/Build/Post Build")]
+        public static void PostBuild()
+        {
+            RenameSrcFiles(SrcPatchCodePath, ".cs_", ".cs");
+            AssetDatabase.Refresh();
+        }
+
+        protected static void RenameSrcFiles(string SrcFilePath, string SrcExt, string DestExt)
+        {
+            if (string.IsNullOrEmpty(SrcFilePath))
+            {
+                return;
+            }
+
+            DirectoryInfo _DirInfo = new DirectoryInfo(SrcFilePath);
+
+            if (_DirInfo == null || !_DirInfo.Exists)
+            {
+                return;
+            }
+
+            foreach (var _FileInfo in _DirInfo.GetFiles())
+            {
+                if (_FileInfo.Extension == SrcExt)
+                {
+                    string _DestPath = _FileInfo.FullName.Replace(SrcExt, DestExt);
+                    _FileInfo.MoveTo(_DestPath);
+                }
+            }
+
+            foreach (var _SubDirInfo in _DirInfo.GetDirectories())
+            {
+                RenameSrcFiles(_SubDirInfo.FullName, SrcExt, DestExt);
+            }
         }
 
         protected static bool CopyPatchSrcFile(out List<string> RetFileList)
@@ -203,7 +240,7 @@
                 return false;
             }
             
-            return false;
+            return true;
         }
 
         protected static bool LoadProjectSetting(out Dictionary<string, string> ProjectSetting)

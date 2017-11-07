@@ -11,10 +11,10 @@
     {
         public new const string NAME = "CopyLocalGameData";
 
-        private string m_SrcPath = Application.streamingAssetsPath + "/db";
-        private string m_DestPath = Application.persistentDataPath + "/db";
+        private string m_SrcPath = string.Empty;
+        private string m_DestPath = string.Empty;
 
-        private string[] m_DataFileList = new string[] {"game1.data",  "game2.data"};
+        private string[] m_DataFileList = null;
 
         private List<string> m_ToCopyFileList = null;
 
@@ -45,32 +45,44 @@
 
             _MainUI.SetHint("Initialize Game Resource");
 
+            m_SrcPath = MainUI.GameDataSrcPath;
+            m_DestPath = MainUI.GameDataDestPath;
+            m_DataFileList = MainUI.GameDataFileList;
+
+            DirectoryInfo _DirInfo = new DirectoryInfo(m_DestPath);
+            if (_DirInfo == null || !_DirInfo.Exists)
+            {
+                Directory.CreateDirectory(m_DestPath);
+            }
+
 #if UNITY_EDITOR
             for (int i = 0; i < m_DataFileList.Length; ++i)
             {
                 string _FileName = m_DataFileList[i];
+                string _FilePath = Path.Combine(m_DestPath, _FileName);
 
                 if (string.IsNullOrEmpty(_FileName))
                 {
                     continue;
                 }
 
-                if (SystemUtility.IsFileExist(m_DestPath + "/" + _FileName))
+                if (SystemUtility.IsFileExist(_FilePath))
                 {
-                    SystemUtility.DeleteFile(m_DestPath + "/" + _FileName);
+                    SystemUtility.DeleteFile(_FilePath);
                 }
             }
 #endif
             for (int i = 0; i < m_DataFileList.Length; ++i)
             {
                 string _FileName = m_DataFileList[i];
+                string _FilePath = Path.Combine(m_DestPath, _FileName);
 
                 if (string.IsNullOrEmpty(_FileName))
                 {
                     continue;
                 }
 
-                if (!SystemUtility.IsFileExist(m_DestPath + "/" + _FileName))
+                if (!SystemUtility.IsFileExist(_FilePath))
                 {
                     m_ToCopyFileList.Add(_FileName);
                 }
@@ -117,31 +129,48 @@
 
             for (int i = 0; i < m_ToCopyFileList.Count; ++i)
             {
-                string _SrcPath = m_SrcPath + "/" + m_ToCopyFileList[i];
-                string _DestPath = m_DestPath + "/" + m_ToCopyFileList[i];
+                string _SrcPath = Path.Combine(m_SrcPath, m_ToCopyFileList[i]);
+                string _DestPath = Path.Combine(m_DestPath, m_ToCopyFileList[i]);
 
-                WWW _Reader = new WWW(_SrcPath);
-
-                while (!_Reader.isDone)
+                if (Application.platform == RuntimePlatform.Android)
                 {
-                    yield return null;
+                    WWW _Reader = new WWW(_SrcPath);
+
+                    while (!_Reader.isDone)
+                    {
+                        yield return null;
+                    }
+
+                    if (!string.IsNullOrEmpty(_Reader.error))
+                    {
+                        Debug.LogError(_Reader.error);
+                        yield break;
+                    }
+
+                    try
+                    {
+                        File.WriteAllBytes(_DestPath, _Reader.bytes);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError(ex.Message);
+                        yield break;
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        File.Copy(_SrcPath, _DestPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError(ex.Message);
+                        yield break;
+                    }
                 }
 
-                if (!string.IsNullOrEmpty(_Reader.error))
-                {
-                    Debug.LogError(_Reader.error);
-                    yield break;
-                }
-
-                try
-                {
-                    File.WriteAllBytes(_DestPath, _Reader.bytes);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError(ex.Message);
-                    yield break;
-                }
+                yield return null;
             }
 
             m_bFinished = true;
