@@ -21,7 +21,7 @@
 
             if (_PatchLoader == null)
             {
-                AppDomain _AppDomain = PatchManager.GetAppDomain();
+                AppDomain _AppDomain = GameFacade.GetInstance().AppDomain;
                 
                 if (_AppDomain != null)
                 {

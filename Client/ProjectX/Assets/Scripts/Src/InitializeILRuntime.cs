@@ -50,9 +50,9 @@
 
             if (m_bFinished && m_Dll != null && m_Pdb != null)
             {
-                if (PatchManager.Initialize(m_Dll, m_Pdb))
+                if (GameFacade.GetInstance().InitializeAppDomain(m_Dll, m_Pdb))
                 {
-                    AppDomain _AppDomain = PatchManager.GetAppDomain();
+                    AppDomain _AppDomain = GameFacade.GetInstance().AppDomain;
 
                     if (_AppDomain != null)
                     {

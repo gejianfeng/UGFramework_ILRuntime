@@ -2,6 +2,7 @@
 {
     using PureMVC.Patterns;
     using ILRuntime.Runtime.Enviorment;
+    using System.IO;
 
     public class GameFacade: Facade
     {
@@ -15,11 +16,24 @@
             {
                 return m_AppDomain;
             }
+        }
 
-            set
+        public bool InitializeAppDomain(MemoryStream DllData, MemoryStream PdbData)
+        {
+            if (DllData == null || PdbData == null)
             {
-                m_AppDomain = value;
+                return false;
             }
+
+            if (m_AppDomain != null)
+            {
+                m_AppDomain = null;
+            }
+
+            m_AppDomain = new AppDomain();
+            m_AppDomain.LoadAssembly(DllData, PdbData, new Mono.Cecil.Pdb.PdbReaderProvider());
+
+            return true;
         }
 
         public static GameFacade GetInstance()
