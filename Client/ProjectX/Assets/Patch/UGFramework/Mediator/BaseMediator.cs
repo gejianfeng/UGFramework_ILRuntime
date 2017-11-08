@@ -79,5 +79,10 @@
         {
             GameFacade.GetInstance().RemoveMediator(MediatorName);
         }
+
+        public virtual void InitializeParam(object Param)
+        {
+
+        }
     }
 }

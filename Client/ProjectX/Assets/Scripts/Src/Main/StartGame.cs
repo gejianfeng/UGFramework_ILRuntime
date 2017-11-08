@@ -31,7 +31,7 @@
             }
             else
             {
-                MethodInfo _Method = _PatchLoader.GetMethod("Launch", BindingFlags.Public | BindingFlags.Static, null, new System.Type[] { }, null);
+                MethodInfo _Method = _PatchLoader.GetMethod("Launch", BindingFlags.Public | BindingFlags.Static);
                 
                 if (_Method != null)
                 {
