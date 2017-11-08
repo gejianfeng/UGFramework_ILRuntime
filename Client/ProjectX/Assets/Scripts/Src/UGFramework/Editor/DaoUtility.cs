@@ -20,7 +20,7 @@
         public static readonly string DbExportPath = Application.dataPath + "/StreamingAssets/db";
         public static readonly string ExcelFilePath = Application.dataPath + "/../../../Design";
         public static readonly string CodeGeneratePath = Application.dataPath + "/Patch/Daos";
-        public static readonly string DbPassword = "";//"@(7$$5)1";
+        public static readonly string DbPassword = ""; //"@(7$$5)1";
         //---------- Above defination should be customed according to project. ----------
 
         public class ExcelTable
@@ -229,10 +229,10 @@
                 }
 
                 string _DaoSrc = string.Empty;
-                _DaoSrc += "namespace PureMVC.Project.Daos\n";
+                _DaoSrc += "namespace ProjectX.Daos\n";
                 _DaoSrc += "{\n";
                 _DaoSrc += "\tusing SQLite.Attribute;\n";
-                _DaoSrc += "\tusing PureMVC.UGFramework.Core;\n";
+                _DaoSrc += "\tusing UGFramework.Core;\n";
                 _DaoSrc += "\tusing UnityEngine.Scripting;\n\n";
                 _DaoSrc += "\t[Preserve]\n";
                 _DaoSrc += "\tpublic class " + m_TableName + ": DaoVO\n";
@@ -248,10 +248,6 @@
 
                     _DaoSrc += "\t\tpublic " + GetFieldCodeTypeByIndex(i) + " " + m_FieldNames[i] + "{ get; set; }\n";
                 }
-                _DaoSrc += "\t\tpublic " + GetFieldCodeTypeByIndex(m_PrimaryKeyIndex) + " GetIndexValue()\n";
-                _DaoSrc += "\t\t{\n";
-                _DaoSrc += "\t\t\treturn " + m_FieldNames[m_PrimaryKeyIndex] + ";";
-                _DaoSrc += "\t\t}\n";
                 _DaoSrc += "\t}\n";
                 _DaoSrc += "}\n";
 
@@ -296,10 +292,10 @@
                 string _DaoAccessSrc = string.Empty;
                 string _CacheValueName = "m_DataCache";
                 string _DaoIndexName = m_TableName + "Id";
-                _DaoAccessSrc += "namespace PureMVC.Project.Daos\n";
+                _DaoAccessSrc += "namespace ProjectX.Daos\n";
                 _DaoAccessSrc += "{\n";
                 _DaoAccessSrc += "\tusing System.Collections.Generic;\n";
-                _DaoAccessSrc += "\tusing PureMVC.UGFramework.Core;\n\n";
+                _DaoAccessSrc += "\tusing UGFramework.Core;\n\n";
                 _DaoAccessSrc += "\tpublic class " + m_TableName + "Dao: Dao\n";
                 _DaoAccessSrc += "\t{\n";
                 _DaoAccessSrc += "\t\tprotected Dictionary<" + GetFieldCodeTypeByIndex(m_PrimaryKeyIndex) + ", " + m_TableName + "> " + _CacheValueName + " = null;\n\n";
