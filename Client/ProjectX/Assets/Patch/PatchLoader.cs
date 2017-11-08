@@ -1,4 +1,4 @@
-﻿namespace PureMVC.Project
+﻿namespace ProjectX
 {
     class PatchLoader
     {
